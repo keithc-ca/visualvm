@@ -61,7 +61,6 @@ import org.openide.util.NbBundle;
 public class JmxSupport implements DataRemovedListener {
     private final static Logger LOGGER = Logger.getLogger(JmxSupport.class.getName());
     private static final String PROCESS_CPU_TIME_ATTR = "ProcessCpuTime"; // NOI18N
-    private static final String PROCESSING_CAPACITY_ATTR = "ProcessingCapacity"; // NOI18N
     private static final String PERM_GEN = "Perm Gen";  // NOI18N
     private static final String PS_PERM_GEN = "PS Perm Gen";    // NOI18N
     private static final String CMS_PERM_GEN = "CMS Perm Gen";    // NOI18N
@@ -76,7 +75,6 @@ public class JmxSupport implements DataRemovedListener {
     private JVMImpl jvm;
     private Object processCPUTimeAttributeLock = new Object();
     private Boolean processCPUTimeAttribute;
-    private long processCPUTimeMultiplier;
     private Timer timer;
     private MemoryPoolMXBean permGenPool;
     private Collection<GarbageCollectorMXBean> gcList;
@@ -112,15 +110,10 @@ public class JmxSupport implements DataRemovedListener {
                        MBeanInfo info = conn.getMBeanInfo(osName);
                        MBeanAttributeInfo[] attrs = info.getAttributes();
                        
-                       processCPUTimeMultiplier = 1;
                        for (MBeanAttributeInfo attr : attrs) {
                            String name = attr.getName();
                            if (PROCESS_CPU_TIME_ATTR.equals(name)) {
                                processCPUTimeAttribute = Boolean.TRUE;
-                           }
-                           if (PROCESSING_CAPACITY_ATTR.equals(name)) {
-                               Number mul = (Number) conn.getAttribute(osName,PROCESSING_CAPACITY_ATTR);
-                               processCPUTimeMultiplier = mul.longValue();
                            }
                         }
                     } catch (Exception ex) {
@@ -145,7 +138,7 @@ public class JmxSupport implements DataRemovedListener {
                 try {
                     Long cputime = (Long)conn.getAttribute(osName,PROCESS_CPU_TIME_ATTR);
                     
-                    return cputime.longValue()*processCPUTimeMultiplier;
+                    return cputime.longValue();
                 } catch (Exception ex) {
                     LOGGER.throwing(JmxSupport.class.getName(), "hasProcessCPUTimeAttribute", ex); // NOI18N
                 }

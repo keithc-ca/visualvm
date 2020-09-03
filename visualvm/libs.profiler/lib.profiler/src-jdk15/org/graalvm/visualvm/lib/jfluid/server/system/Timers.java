@@ -62,9 +62,7 @@ public class Timers {
 
     private static MBeanServerConnection conn;
     private static final String PROCESS_CPU_TIME_ATTR = "ProcessCpuTime"; // NOI18N
-    private static final String PROCESSING_CAPACITY_ATTR = "ProcessingCapacity"; // NOI18N
     private static ObjectName osName;
-    private static long processCPUTimeMultiplier;
     private static int processorsCount;
     private static boolean processCPUTimeAttribute;
     private static boolean initialized;
@@ -101,7 +99,7 @@ public class Timers {
              try {
                  Long cputime = (Long)conn.getAttribute(osName,PROCESS_CPU_TIME_ATTR);
 
-                 return (cputime.longValue()*processCPUTimeMultiplier)/processorsCount;
+                 return cputime.longValue()/processorsCount;
              } catch (Exception ex) {
                  ex.printStackTrace();
              }
@@ -135,17 +133,12 @@ public class Timers {
             conn = ManagementFactory.getPlatformMBeanServer();
             osName = new ObjectName(ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME);
             attrs = conn.getMBeanInfo(osName).getAttributes();
-            processCPUTimeMultiplier = 1;
             processorsCount = ManagementFactory.getOperatingSystemMXBean().getAvailableProcessors();
             for (int i = 0; i < attrs.length; i++) {
                 String name = attrs[i].getName();
                 
                 if (PROCESS_CPU_TIME_ATTR.equals(name)) {
                     processCPUTimeAttribute = true;
-                }
-                if (PROCESSING_CAPACITY_ATTR.equals(name)) {
-                    Number mul = (Number) conn.getAttribute(osName,PROCESSING_CAPACITY_ATTR);
-                    processCPUTimeMultiplier = mul.longValue();
                 }
             }
         } catch (JMRuntimeException ex) {
